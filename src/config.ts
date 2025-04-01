@@ -165,7 +165,7 @@ export async function showConfigUI() {
       ],
     })) as keyof Config | "template" | "cancel" | symbol;
 
-    if (p.isCancel(choice)) {
+    if (p.isCancel(choice) || choice === "cancel") {
       return;
     }
 
@@ -184,18 +184,58 @@ export async function showConfigUI() {
 
       await setConfigs([["openaiEndpoint", endpoint as string]]);
     } else if (choice === "model") {
-      const model = await p.select({
-        message: "Model",
-        options: (
-          await getModels()
-        ).map((model) => ({
-          label: model,
-          value: model,
-        })),
-        initialValue: config.model,
+      const modelSelectionMethod = await p.select({
+        message: "How would you like to select a model?",
+        options: [
+          { label: "Choose from list", value: "list" },
+          { label: "Enter manually", value: "manual" },
+          { label: "Cancel", value: "cancel" },
+        ],
       });
 
-      await setConfigs([["model", model as string]]);
+      if (
+        p.isCancel(modelSelectionMethod) ||
+        modelSelectionMethod === "cancel"
+      ) {
+        // Do nothing, just return to main menu
+      } else if (modelSelectionMethod === "list") {
+        try {
+          const models = await getModels();
+          const model = await p.select({
+            message: "Model",
+            options: models.map((model) => ({
+              label: model,
+              value: model,
+            })),
+            initialValue: config.model,
+          });
+
+          if (!p.isCancel(model)) {
+            await setConfigs([["model", model as string]]);
+          }
+        } catch (error) {
+          console.error(
+            "Failed to fetch models. Try entering the model name manually."
+          );
+          const manualModel = await p.text({
+            message: "Enter model name",
+            initialValue: config.model,
+          });
+
+          if (!p.isCancel(manualModel)) {
+            await setConfigs([["model", manualModel as string]]);
+          }
+        }
+      } else if (modelSelectionMethod === "manual") {
+        const manualModel = await p.text({
+          message: "Enter model name",
+          initialValue: config.model,
+        });
+
+        if (!p.isCancel(manualModel)) {
+          await setConfigs([["model", manualModel as string]]);
+        }
+      }
     } else if (choice === "template") {
       const templateChoice = (await p.select({
         message: "Choose a template to edit",
@@ -239,10 +279,8 @@ export async function showConfigUI() {
       }
     }
 
-    if (p.isCancel(choice)) {
-      return;
-    }
-
+    // If we get here, the user has completed an action but hasn't cancelled,
+    // so show the menu again
     showConfigUI();
     // biome-ignore lint/suspicious/noExplicitAny: unknown types to me
   } catch (error: any) {
