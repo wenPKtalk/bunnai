@@ -19,6 +19,17 @@ async function getStagedDiff(target_dir: string) {
   }
 }
 
+async function getCurrentBranchName(target_dir: string): Promise<string> {
+  try {
+    const git = simpleGit(target_dir);
+    const branchSummary = await git.branch();
+    return branchSummary.current;
+  } catch (error) {
+    console.error("Error getting branch name:", error);
+    return "unknown-branch";
+  }
+}
+
 export async function run(options: RunOptions, templateName?: string) {
   const config = await readConfigFile();
   if (options.verbose) {
@@ -85,6 +96,8 @@ export async function run(options: RunOptions, templateName?: string) {
     process.exit(1);
   }
 
+  const branchName = await getCurrentBranchName(target_dir);
+
   const rendered_template = template.replace("{{diff}}", diff);
   if (options.verbose) {
     console.debug("Template rendered with git diff.");
@@ -125,7 +138,7 @@ export async function run(options: RunOptions, templateName?: string) {
       process.exit(1);
     }
 
-    console.log(content.trim());
+    console.log(`[${branchName}] ${content.trim()}`);
     if (options.verbose) {
       console.debug("Commit message generated and outputted.");
     }
