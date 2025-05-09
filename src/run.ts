@@ -11,11 +11,10 @@ async function getStagedDiff(target_dir: string) {
   try {
     const git = simpleGit(target_dir);
     const diff = await git.diff(["--cached"]);
-
     return diff;
   } catch (error) {
     console.error("Error getting git diff:", error);
-    throw error; // Re-throw the error after logging it
+    throw error;
   }
 }
 
@@ -117,7 +116,7 @@ export async function run(options: RunOptions, templateName?: string) {
         {
           role: "system",
           content:
-            "You are a commit message generator. I will provide you with a git diff, and I would like you to generate an appropriate commit message using the conventional commit format. Do not write any explanations or other words, just reply with the commit message.",
+            "You are a commit message generator. I will provide you with a git diff, and I would like you to generate 3 appropriate commit message options using the conventional commit format. Format your response as a numbered list (1., 2., 3.). Make each option distinct and meaningful. Do not write any explanations or other words, just reply with the numbered list of commit messages.",
         },
         {
           role: "user",
@@ -132,15 +131,30 @@ export async function run(options: RunOptions, templateName?: string) {
       console.debug(JSON.stringify(response, null, 2));
     }
 
-    const content = response.choices[0].message.content;
-    if (!content) {
-      console.error("Failed to generate commit message");
+    const aiCommitMessages = response.choices[0].message.content?.trim();
+    if (!aiCommitMessages) {
+      console.error("Failed to generate commit messages");
       process.exit(1);
     }
 
-    console.log(`[${branchName}] ${content.trim()}`);
+    // Split the response into individual messages
+    const messageLines = aiCommitMessages.split('\n').filter(line => line.trim().length > 0);
+    
+    // Format each message with branch name prefix and ensure the numbering is correct
+    const formattedMessages = messageLines.map((line, index) => {
+      // Extract just the message part (remove the number prefix if it exists)
+      const messageMatch = line.match(/^\d+\.\s*(.+)$/);
+      const messageContent = messageMatch ? messageMatch[1].trim() : line.trim();
+      
+      // Format as "number. [branch] message"
+      return `${index + 1}. [${branchName}] ${messageContent}`;
+    });
+    
+    // Output each formatted message on a new line
+    console.log(formattedMessages.join('\n'));
+    
     if (options.verbose) {
-      console.debug("Commit message generated and outputted.");
+      console.debug("Commit messages generated and outputted.");
     }
   } catch (error) {
     console.error(`Failed to fetch from openai: ${error}`);
