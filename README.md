@@ -34,18 +34,18 @@ insert the following custom command into your [lazygit](https://github.com/jesse
 
 ```yaml
 customCommands:
-    - key: "<c-a>" # ctrl + a
-        description: "pick AI commit"
-        command: 'git commit -m "{{.Form.Msg}}"'
-        context: "files"
-        prompts:
-            - type: "menuFromCommand"
-            title: "ai Commits"
-            key: "Msg"
-            command: "bunx bunnai"
-            filter: '^(?P<number>\d+)\.\s(?P<message>.+)$'
-            valueFormat: "{{ .message }}"
-            labelFormat: "{{ .number }}: {{ .message | green }}"
+  - key: "<c-a>"  # ctrl + a
+    description: "pick AI commit"
+    command: 'git commit -m "{{.Form.Msg}}"'
+    context: "files"
+    prompts:
+      - type: "menuFromCommand"
+        title: "ai Commits"
+        key: "Msg"
+        command: "bunx bunnai"
+        filter: '^(?P<number>\d+)\.\s(?P<message>.+)$'
+        valueFormat: "{{ .message }}"
+        labelFormat: "{{ .number }}: {{ .message | green }}"
 ```
 
 ### with vim
@@ -56,19 +56,19 @@ abort comitting by deleting the commit message in vim.
 
 ```yaml
 customCommands:
-    - key: "<c-a>" # ctrl + a
-      description: "Pick AI commit"
-      command: 'echo "{{.Form.Msg}}" > .git/COMMIT_EDITMSG && vim .git/COMMIT_EDITMSG && [ -s .git/COMMIT_EDITMSG ] && git commit -F .git/COMMIT_EDITMSG || echo "Commit message is empty, commit aborted."'
-      context: "files"
-      subprocess: true
-      prompts:
-          - type: "menuFromCommand"
-            title: "AI Commits"
-            key: "Msg"
-            command: "bunx bunnai"
-            filter: '^(?P<number>\d+)\.\s(?P<message>.+)$'
-            valueFormat: "{{ .message }}"
-            labelFormat: "{{ .number }}: {{ .message | green }}"
+  - key: "<c-a>" # ctrl + a
+    description: "Pick AI commit"
+    command: 'echo "{{.Form.Msg}}" > .git/COMMIT_EDITMSG && vim .git/COMMIT_EDITMSG && [ -s .git/COMMIT_EDITMSG ] && git commit -F .git/COMMIT_EDITMSG || echo "Commit message is empty, commit aborted."'
+    context: "files"
+    subprocess: true
+    prompts:
+      - type: "menuFromCommand"
+        title: "AI Commits"
+        key: "Msg"
+        command: "bunx bunnai"
+        filter: '^(?P<number>\d+)\.\s(?P<message>.+)$'
+        valueFormat: "{{ .message }}"
+        labelFormat: "{{ .number }}: {{ .message | green }}"
 ```
 
 ## acknowledgements
